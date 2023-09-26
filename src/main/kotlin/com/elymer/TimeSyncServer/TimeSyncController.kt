@@ -15,8 +15,9 @@ import java.net.http.HttpResponse.ResponseInfo
 @RestController
 @Validated
 class TimeSyncController {
-  @Autowired
-  internal lateinit var machineTimeStatus:MachineTimeStatus
+  internal val machineTimeStatus:MachineTimeStatus = MachineTimeStatus.read()?.let {
+    MachineTimeStatus(it.map, it.timerDelay)
+  }?:MachineTimeStatus()
 
   @GetMapping()
   fun getRequestHandler(httpRequest: HttpServletRequest): String {
@@ -28,7 +29,7 @@ class TimeSyncController {
   fun requestSetTimerDelay(@RequestBody timerDelay: Int?) {
     timerDelay?.let {
       this.machineTimeStatus.timerDelay = timerDelay
-      this.machineTimeStatus.update()
+      val s = this.machineTimeStatus.update()
     }
   }
   @GetMapping("/getTimerDelay")

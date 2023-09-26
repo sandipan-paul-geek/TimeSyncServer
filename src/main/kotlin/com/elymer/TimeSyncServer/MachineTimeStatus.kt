@@ -3,15 +3,10 @@ package com.elymer.TimeSyncServer
 import com.elymer.TimeSyncServer.Support.Companion.serialize
 import org.springframework.stereotype.Service
 
-@Service
-class MachineTimeStatus {
-  internal var map: MutableMap<Int, Long> = mutableMapOf()
-  internal var timerDelay = 60000
+@kotlinx.serialization.Serializable
+class MachineTimeStatus(var map: MutableMap<Int, Long> = mutableMapOf(),  var timerDelay:Int = 60000) {
   init {
-    read()?.let {
-      map = this@MachineTimeStatus.map
-      timerDelay = this@MachineTimeStatus.timerDelay
-    }
+    println(timerDelay)
   }
   companion object {
     fun read(): MachineTimeStatus? {
