@@ -22,9 +22,9 @@ class TimeSyncServerApplication: WebServerFactoryCustomizer<TomcatServletWebServ
 	override fun customize(factory: TomcatServletWebServerFactory) {
 		factory.address = InetAddress.getByName("10.0.0.6")
 		factory.port = 8085
-		factory.addAdditionalTomcatConnectors(Connector().apply {
-			port = 8090
-		})
+//		factory.addAdditionalTomcatConnectors(Connector().apply {
+//			port = 8090
+//		})
 	}
 }
 

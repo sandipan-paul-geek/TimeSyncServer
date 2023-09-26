@@ -1,22 +1,43 @@
 package com.elymer.TimeSyncServer
 
+import com.elymer.TimeSyncServer.MachineTimeStatus.Companion.update
 import com.elymer.TimeSyncServer.Support.Companion.serialize
 import jakarta.servlet.http.HttpServletRequest
 import kotlinx.serialization.Serializable
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RestController
 import org.springframework.web.bind.annotation.*
+import java.net.http.HttpResponse.ResponseInfo
 
 @RestController
 @Validated
 class TimeSyncController {
+  @Autowired
+  internal lateinit var machineTimeStatus:MachineTimeStatus
+
   @GetMapping()
   fun getRequestHandler(httpRequest: HttpServletRequest): String {
     val ipAddress = getClientIP(httpRequest)
     val pathInfo = httpRequest.pathInfo
-    return "Welcome to What is My IP!   Your Ip: $ipAddress"
+    return "Time Sync Server for 'SMT' is Running..."
+  }
+  @PostMapping("/setTimerDelay")
+  fun requestSetTimerDelay(@RequestBody timerDelay: Int?) {
+    timerDelay?.let {
+      this.machineTimeStatus.timerDelay = timerDelay
+      this.machineTimeStatus.update()
+    }
+  }
+  @GetMapping("/getTimerDelay")
+  fun requestGetTimerDelay():Int {
+   return this.machineTimeStatus.timerDelay
+  }
+  @GetMapping("/machineTimeStatus")
+  fun requestMachineTimeStatus(): String {
+    return this.machineTimeStatus.map.serialize()
   }
 
   @GetMapping("/time")
@@ -24,7 +45,15 @@ class TimeSyncController {
     val ipAddress = getClientIP(httpRequest)
     Time1970().getSecondsFrom1970().toLong().let { secondsFrom1970 ->
       val dt = Time1970().getDateFromSeconds(secondsFrom1970.toInt())
-      DateTimeInfo(secondsFrom1970, 60000).serialize().let { json ->
+      DateTimeInfo(secondsFrom1970, this.machineTimeStatus.timerDelay.toLong()).serialize().let { json ->
+       val ip = ipAddress.split('.').last().toInt()
+       if( machineTimeStatus.map.contains(ip)) {
+         machineTimeStatus.map[ip] = secondsFrom1970
+       }
+        else{
+         machineTimeStatus.map[ip] = secondsFrom1970
+        }
+        machineTimeStatus.update()
         println("SyncTime Request From IP: '$ipAddress' Received.\nSending response data $json\n-----------")
         return  json
       }
@@ -32,21 +61,21 @@ class TimeSyncController {
   }
 
   @PostMapping("/debug-log")
-  fun requestLogHandler_debug(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
+  fun requestLogHandlerDebug(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
     val ipAddress = getClientIP(httpRequest)
     val pathInfo = httpRequest.pathInfo
     println("Debug Msg Received: $debugMsg from ip: $ipAddress")
     return "debug-log received"
   }
   @PostMapping("/regular-log")
-  fun requestLogHandler_regular(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
+  fun requestLogHandlerRegular(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
     val ipAddress = getClientIP(httpRequest)
     val pathInfo = httpRequest.pathInfo
     println("regular Msg Received: $debugMsg from ip: $ipAddress")
     return "regular-log received"
   }
   @PostMapping( "/error-log")
-  fun requestLogHandler_error(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
+  fun requestLogHandlerError(@RequestBody debugMsg: String?, httpRequest: HttpServletRequest): String {
     val ipAddress = getClientIP(httpRequest)
     val pathInfo = httpRequest.pathInfo
     println("error Msg Received: $debugMsg from ip: $ipAddress")
@@ -59,14 +88,6 @@ class TimeSyncController {
     println("Msg Received: $debugMsg from ip: $ipAddress")
     return "msg-log received"
   }
-//  @PostMapping("/error-log")
-//  fun requesErrorLog(errorMsg: String, httpRequest: HttpServletRequest): String {
-//    val ipAddress = getClientIP(httpRequest)
-//    println("Debug Msg Received: $errorMsg from ip: $ipAddress")
-//    return "No Error Info Received"
-//  }
-
-
   private fun getClientIP(request: HttpServletRequest): String {
     val xForwardedForHeader = request.getHeader("X-FORWARDED-FOR")
     return if (xForwardedForHeader == null || xForwardedForHeader.isEmpty()) {
