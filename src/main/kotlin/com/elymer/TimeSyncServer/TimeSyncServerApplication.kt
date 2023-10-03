@@ -15,7 +15,7 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 import java.util.Base64
 
-
+//TODO -> Note:  Execute "./gradlew bootjar" (without quotes) in terminal under project directory "D:\Shared\SandipanPaul\IntelliProjects\materialserver>" in order to make jar
 @SpringBootApplication
 class TimeSyncServerApplication: WebServerFactoryCustomizer<TomcatServletWebServerFactory> {
 

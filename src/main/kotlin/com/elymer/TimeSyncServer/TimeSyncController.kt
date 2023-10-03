@@ -25,6 +25,7 @@ class TimeSyncController {
     val pathInfo = httpRequest.pathInfo
     return "Time Sync Server for 'SMT' is Running..."
   }
+
   @PostMapping("/setTimerDelay")
   fun requestSetTimerDelay(@RequestBody timerDelay: Int?) {
     timerDelay?.let {
@@ -32,10 +33,12 @@ class TimeSyncController {
       val s = this.machineTimeStatus.update()
     }
   }
+
   @GetMapping("/getTimerDelay")
   fun requestGetTimerDelay():Int {
    return this.machineTimeStatus.timerDelay
   }
+
   @GetMapping("/machineTimeStatus")
   fun requestMachineTimeStatus(): String {
     return this.machineTimeStatus.map.serialize()
